@@ -1,4 +1,30 @@
 import pygame
+import random
+
+#core class
+class Core:
+    def __init__(self):
+        self.hp = 100
+
+
+#wall class
+class Wall:
+    def __init__(self):
+        self.hp = 200
+
+
+class Node:
+    def __init__(self):
+        self.hp = 50
+    def birth(self):
+        networks.append((0,0))
+
+class Lightningtower:
+    def __init__(self):
+        self.hp = 75
+    def strikereq(self,x,y):
+        if random.randint(0,100) == 13:
+            print("STRIKE",x,y)
 
 #Initialise basics
 pygame.display.set_caption('Terra Nova')
@@ -18,6 +44,7 @@ xpos = 1600
 ypos = 1600
 carrying = False
 mousedown = False
+networks = []
 
 #getting Images
 hotbar = pygame.image.load("Images/hotbar.png")
@@ -25,22 +52,13 @@ emptytile = pygame.image.load("Images/emptytile.png")
 coretile = pygame.image.load("Images/core.png")
 walltile = pygame.image.load("Images/wall.png")
 nodetile = pygame.image.load("Images/node.png")
+delete = pygame.image.load("Images/delete.png")
+lightningtower = pygame.image.load("Images/lightningtower.png")
 
-#core class
-class Core:
-    def __init__(self):
-        self.hp = 100
+
+
 c = Core()
 tiles[13][21] = c
-
-#wall class
-class Wall:
-    def __init__(self):
-        self.hp = 200
-class Node:
-    def __init__(self):
-        self.hp = 50
-
 
 while running:
     if mousedown:
@@ -85,12 +103,11 @@ while running:
                 tile = walltile
             elif isinstance(tiles[x][y],Node):
                 tile = nodetile
-
-
+            elif isinstance(tiles[x][y],Lightningtower):
+                tile = lightningtower
+                tiles[x][y].strikereq(x,y)
 
             screen.blit(tile,(x*128-xpos,y*128-ypos))
-    
-
 
 
 
@@ -103,8 +120,24 @@ while running:
     #checking for positioning
     if mousedown and carrying != False and tiles[int((xpos+xcurs)/128)][int((ypos+ycurs)/128)] == 0:
         tiles[int((xpos+xcurs)/128)][int((ypos+ycurs)/128)] = carrying
-        carrying = False
-        #xpos,ypos-xcurs,ycurs
+        if isinstance(carrying,Node):
+            tiles[int((xpos+xcurs)/128)][int((ypos+ycurs)/128)].birth()
+
+
+        if keys[pygame.K_LSHIFT] == False:
+            carrying = False
+
+
+
+
+
+    
+    if mousedown and carrying != False and tiles[int((xpos+xcurs)/128)][int((ypos+ycurs)/128)] != 0 and carrying == 1:
+        tiles[int((xpos+xcurs)/128)][int((ypos+ycurs)/128)] = 0
+        if keys[pygame.K_LSHIFT] == False:
+            carrying = False
+    
+
 
 
 
@@ -112,17 +145,28 @@ while running:
     screen.blit(hotbar,(0,600))
     screen.blit(walltile,(10,610))
     screen.blit(nodetile,(143,610))
+    screen.blit(lightningtower,(286,610))
+    screen.blit(delete,(1145,610))
     
     if mousedown and 10 < xcurs < 138 and 610 < ycurs < 738:
         carrying = Wall()
     if mousedown and 143 < xcurs < 271 and 610 < ycurs < 738:
         carrying = Node()
+    if mousedown and 286 < xcurs < 414 and 610 < ycurs < 738:
+        carrying = Lightningtower()
+    if mousedown and 1145 < xcurs < 1273 and 610 < ycurs < 738:
+        carrying = 1
 
     if carrying != False:
         if isinstance(carrying,Wall):
             screen.blit(walltile,(xcurs-64,ycurs+-64))
         elif isinstance(carrying,Node):
             screen.blit(nodetile,(xcurs-64,ycurs+-64))
+        elif isinstance(carrying,Lightningtower):
+            screen.blit(lightningtower,(xcurs-64,ycurs+-64))
+        elif carrying == 1:
+            screen.blit(delete,(xcurs-64,ycurs+-64))
+    
 
 
 
@@ -137,12 +181,7 @@ while running:
 
 
 
-
-
-
 pygame.quit()
-
-
 
 
 
