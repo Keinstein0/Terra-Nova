@@ -20,16 +20,52 @@ class Node:
         self.hp = 50
         self.pwr = 0
         self.powr = 0
-    
+        self.col = ""
+        self.pulses = []
+        self.above900 = False
     def powercheck (self,x,y):
         self.powr = 0
         for xx in range(7):
             for yy in range(7):
                 try:
                     self.powr += tiles[x-3+xx][y-3+yy].pwr
+                    
                 except:
                     pass
         return self.powr
+    def makelines(self,x,y):
+        self.col = generate_cyan_shade(1000-globalpower)
+
+
+
+        for xx in range(7):
+            for yy in range(7):
+                if tiles[x-3+xx][y-3+yy] != 0:
+                    pygame.draw.line(screen,self.col,(x*128-xpos+64,y*128-ypos+64),((x-3+xx)*128-xpos+64,(y-3+yy)*128-ypos+64),10)
+        if globalpower >= 900 and self.above900 == False:
+            self.pulses.append(1)
+            self.above900 = True
+        if globalpower < 900:
+            self.above900 = False
+            
+        """
+
+        for i in range(len(self.pulses)):
+            pygame.draw.circle(screen,"#43b5ad",(x*128-xpos,y*128-ypos),self.pulses[i],2)
+            self.pulses[i] += 2
+            if self.pulses[i] >= 200:
+                self.pulses.remove(200)
+        """
+        i = 0
+        while i < len(self.pulses):
+            pygame.draw.circle(screen,"#43b5ad",(x*128-xpos+64,y*128-ypos+64),self.pulses[i],4)
+            self.pulses[i] += 2
+            if self.pulses[i] >= 400:
+                 self.pulses.remove(self.pulses[i])
+            else:
+                i += 1
+
+        
 
 
 
@@ -42,10 +78,29 @@ class Lightningtower:
             print("STRIKE",x,y)
             self.pwr = 1000
         else:
-            self.pwr = 0
+            if self.pwr > 0:
+                self.pwr -= 40
+            
         
 
+def generate_cyan_shade(input_number):
+    # Ensure input_number is within the range [0, 1000]
+    input_number = max(0, min(input_number, 1000))
+    if input_number >= 1000:
+        return (0,0,0)
+    if input_number <= 0:
+        return (255,255,255)
 
+    # Calculate the RGB values based on the input number
+    # Cyan has RGB values (0, 255, 255)
+    # We'll adjust the intensity of the blue and green channels
+    blue_intensity = 255 - int(input_number * 255 / 1000)
+    green_intensity = 255 - int(input_number * 255 / 1000)
+
+    # Construct the RGB tuple
+    cyan_rgb = (0, green_intensity, blue_intensity)
+
+    return cyan_rgb
 
 
 
@@ -136,6 +191,16 @@ while running:
                 tiles[x][y].strikereq(x,y)
 
             screen.blit(tile,(x*128-xpos,y*128-ypos))
+    for x in range(25):
+        for y in range(25):
+            if isinstance(tiles[x][y],Node):
+                tiles[x][y].makelines(x,y)
+
+
+
+
+
+    print(globalpower)
 
 
 
@@ -204,7 +269,6 @@ while running:
 
     clock.tick(60)
     pygame.display.flip()
-    print(globalpower)
 
             
 
