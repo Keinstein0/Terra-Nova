@@ -5,26 +5,51 @@ import random
 class Core:
     def __init__(self):
         self.hp = 100
+        self.pwr = 0
 
 
 #wall class
 class Wall:
     def __init__(self):
         self.hp = 200
+        self.pwr = 0
 
 
 class Node:
     def __init__(self):
         self.hp = 50
-    def birth(self):
-        networks.append((0,0))
+        self.pwr = 0
+        self.powr = 0
+    
+    def powercheck (self,x,y):
+        self.powr = 0
+        for xx in range(7):
+            for yy in range(7):
+                try:
+                    self.powr += tiles[x-3+xx][y-3+yy].pwr
+                except:
+                    pass
+        return self.powr
+
+
 
 class Lightningtower:
     def __init__(self):
         self.hp = 75
+        self.pwr = 0
     def strikereq(self,x,y):
         if random.randint(0,100) == 13:
             print("STRIKE",x,y)
+            self.pwr = 1000
+        else:
+            self.pwr = 0
+        
+
+
+
+
+
+
 
 #Initialise basics
 pygame.display.set_caption('Terra Nova')
@@ -45,6 +70,7 @@ ypos = 1600
 carrying = False
 mousedown = False
 networks = []
+globalpower = 0
 
 #getting Images
 hotbar = pygame.image.load("Images/hotbar.png")
@@ -61,6 +87,7 @@ c = Core()
 tiles[13][21] = c
 
 while running:
+    globalpower = 0
     if mousedown:
         mousedown = False
 
@@ -103,6 +130,7 @@ while running:
                 tile = walltile
             elif isinstance(tiles[x][y],Node):
                 tile = nodetile
+                globalpower += tiles[x][y].powercheck(x,y)
             elif isinstance(tiles[x][y],Lightningtower):
                 tile = lightningtower
                 tiles[x][y].strikereq(x,y)
@@ -120,8 +148,9 @@ while running:
     #checking for positioning
     if mousedown and carrying != False and tiles[int((xpos+xcurs)/128)][int((ypos+ycurs)/128)] == 0:
         tiles[int((xpos+xcurs)/128)][int((ypos+ycurs)/128)] = carrying
-        if isinstance(carrying,Node):
-            tiles[int((xpos+xcurs)/128)][int((ypos+ycurs)/128)].birth()
+        
+        #if isinstance(carrying,Node):
+        #    tiles[int((xpos+xcurs)/128)][int((ypos+ycurs)/128)].birth()
 
 
         if keys[pygame.K_LSHIFT] == False:
@@ -175,9 +204,9 @@ while running:
 
     clock.tick(60)
     pygame.display.flip()
+    print(globalpower)
 
             
-
 
 
 
