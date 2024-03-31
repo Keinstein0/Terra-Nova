@@ -5,14 +5,14 @@ import random
 class Core:
     def __init__(self):
         self.hp = 100
-        self.pwr = 0
+        self.pwr = -100
 
 
 #wall class
 class Wall:
     def __init__(self):
         self.hp = 200
-        self.pwr = 0
+        self.pwr = -100
 
 
 class Node:
@@ -24,11 +24,17 @@ class Node:
         self.pulses = []
         self.above900 = False
     def powercheck (self,x,y):
+        global tileschecked
         self.powr = 0
         for xx in range(7):
             for yy in range(7):
                 try:
-                    self.powr += tiles[x-3+xx][y-3+yy].pwr
+                    if (x-3+xx,y-3+yy) in tileschecked:
+                        pass
+                    else:
+                        #print("ok")
+                        tileschecked.append((x-3+xx,y-3+yy))
+                        self.powr += tiles[x-3+xx][y-3+yy].pwr
                     
                 except:
                     pass
@@ -81,7 +87,26 @@ class Lightningtower:
             if self.pwr > 0:
                 self.pwr -= 40
             
-        
+class Battery:
+    def __init__(self):
+        self.hp = 75
+        self.pwr = 0
+        self.storedpwr = 0
+    def execute(self):
+        self.pwr = 0
+        if globalpower > 100 and self.storedpwr <= 10000:
+            self.pwr = -100
+            self.storedpwr += 100
+        elif globalpower <= -100 and self.storedpwr >= 100:
+            self.pwr = 100
+            self.storedpwr -= 100
+        print(self.storedpwr,globalpower)
+
+
+
+
+
+
 
 def generate_cyan_shade(input_number):
     # Ensure input_number is within the range [0, 1000]
@@ -126,6 +151,7 @@ carrying = False
 mousedown = False
 networks = []
 globalpower = 0
+tileschecked = []
 
 #getting Images
 hotbar = pygame.image.load("Images/hotbar.png")
@@ -135,6 +161,7 @@ walltile = pygame.image.load("Images/wall.png")
 nodetile = pygame.image.load("Images/node.png")
 delete = pygame.image.load("Images/delete.png")
 lightningtower = pygame.image.load("Images/lightningtower.png")
+batterytile = pygame.image.load("Images/battery.png")
 
 
 
@@ -172,6 +199,7 @@ while running:
     xcurs, ycurs = pygame.mouse.get_pos()
 
 
+    tileschecked = []
     #rendering tiles
     for x in range(25):
         for y in range(25):
@@ -189,18 +217,20 @@ while running:
             elif isinstance(tiles[x][y],Lightningtower):
                 tile = lightningtower
                 tiles[x][y].strikereq(x,y)
+            elif isinstance(tiles[x][y],Battery):
+                tile = batterytile
 
             screen.blit(tile,(x*128-xpos,y*128-ypos))
     for x in range(25):
         for y in range(25):
             if isinstance(tiles[x][y],Node):
                 tiles[x][y].makelines(x,y)
+            elif isinstance(tiles[x][y],Battery):
+                tiles[x][y].execute()
 
 
 
-
-
-    print(globalpower)
+    #print(globalpower)
 
 
 
@@ -241,6 +271,7 @@ while running:
     screen.blit(nodetile,(143,610))
     screen.blit(lightningtower,(286,610))
     screen.blit(delete,(1145,610))
+    screen.blit(batterytile,(420,610))
     
     if mousedown and 10 < xcurs < 138 and 610 < ycurs < 738:
         carrying = Wall()
@@ -248,6 +279,8 @@ while running:
         carrying = Node()
     if mousedown and 286 < xcurs < 414 and 610 < ycurs < 738:
         carrying = Lightningtower()
+    if mousedown and 420 < xcurs < 548 and 610 < ycurs < 738:
+        carrying = Battery()
     if mousedown and 1145 < xcurs < 1273 and 610 < ycurs < 738:
         carrying = 1
 
@@ -260,7 +293,8 @@ while running:
             screen.blit(lightningtower,(xcurs-64,ycurs+-64))
         elif carrying == 1:
             screen.blit(delete,(xcurs-64,ycurs+-64))
-    
+        elif isinstance(carrying,Battery):
+            screen.blit(batterytile,(xcurs-64,ycurs+-64))
 
 
 
