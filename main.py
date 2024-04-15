@@ -81,7 +81,7 @@ class Lightningtower:
         self.pwr = 0
     def strikereq(self,x,y):
         if random.randint(0,100) == 13:
-            print("STRIKE",x,y)
+            #print("STRIKE",x,y)
             self.pwr = 1000
         else:
             if self.pwr > 0:
@@ -94,6 +94,7 @@ class Battery:
         self.storedpwr = 0
     def execute(self):
         self.pwr = 0
+        """
         if globalpower > 100 and self.storedpwr <= 10000:
             self.pwr = -100
             self.storedpwr += 100
@@ -101,7 +102,7 @@ class Battery:
             self.pwr = 100
             self.storedpwr -= 100
         print(self.storedpwr,globalpower)
-
+        """
 
 
 
@@ -152,6 +153,7 @@ mousedown = False
 networks = []
 globalpower = 0
 tileschecked = []
+globalstored = 0
 
 #getting Images
 hotbar = pygame.image.load("Images/hotbar.png")
@@ -221,16 +223,32 @@ while running:
                 tile = batterytile
 
             screen.blit(tile,(x*128-xpos,y*128-ypos))
+    count = 0
     for x in range(25):
         for y in range(25):
             if isinstance(tiles[x][y],Node):
                 tiles[x][y].makelines(x,y)
             elif isinstance(tiles[x][y],Battery):
-                tiles[x][y].execute()
+                count += 1
+    try:
+        
+        if globalpower < 0 and globalstored > 0:
+            for i in range(count):
+                if globalpower < 100*count:
+                    globalstored -= (0-globalpower/count)
+                    globalpower += (0-globalpower/count)
+        
+        if globalpower > 0:
+            for i in range(count):
+                if globalstored < count*50000:
+                    globalstored += (globalpower/count)
+                    globalpower -= (globalpower/count)
+
+    except:
+        pass
 
 
-
-    #print(globalpower)
+    print(globalpower, globalstored)
 
 
 
