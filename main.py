@@ -120,13 +120,22 @@ class Spawner:
 class Enemy:
     def __init__(self):
         self.lp = 100
-        self.xpos = 13*128
+        self.xpos = 13*128+32
         self.ypos = 0
 
 
     def execute(self):
         screen.blit(enemytex, (self.xpos-xpos,self.ypos-ypos))
-        self.xpos, self.ypos = move_towards_target((self.xpos,self.ypos),(13*128,21*128), 2)
+        print(int(self.xpos/128),int(self.ypos/128))
+        if tiles[int(self.xpos/128)][int(self.ypos/128)] != 0 and not isinstance(tiles[int(self.xpos/128)][int(self.ypos/128)],Spawner):
+            tiles [int(self.xpos/128)][int(self.ypos/128)].hp -= 5
+            
+        else:
+            self.xpos, self.ypos = move_towards_target((self.xpos,self.ypos),(13*128+32,21*128), 2)
+
+
+
+
 
 
         #da enemy can only walk at 2 coordinates per tick
@@ -264,6 +273,13 @@ while running:
     #rendering tiles
     for x in range(25):
         for y in range(25):
+            try:
+                if tiles[x][y].hp <= 0:
+                    tiles[x][y] = 0
+            except:
+                pass
+
+
             if tiles[x][y] == 0 or isinstance(tiles[x][y],Spawner):
                 tile = emptytile
 
@@ -282,6 +298,15 @@ while running:
                 tile = batterytile
 
             screen.blit(tile,(x*128-xpos,y*128-ypos))
+    
+
+
+
+
+
+
+
+
     count = 0
     for x in range(25):
         for y in range(25):
