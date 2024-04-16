@@ -8,12 +8,19 @@ class Core:
         self.hp = 100
         self.pwr = -100
 
+    def damage(self,dmg):
+        self.hp -= dmg
+
 
 #wall class
 class Wall:
     def __init__(self):
+        print("new wall object created")
         self.hp = 200
         self.pwr = -100
+
+    def damage(self,dmg):
+        self.hp -= dmg
 
 
 class Node:
@@ -24,6 +31,7 @@ class Node:
         self.col = ""
         self.pulses = []
         self.above900 = False
+
     def powercheck (self,x,y):
         global tileschecked
         self.powr = 0
@@ -36,14 +44,12 @@ class Node:
                         #print("ok")
                         tileschecked.append((x-3+xx,y-3+yy))
                         self.powr += tiles[x-3+xx][y-3+yy].pwr
-                    
                 except:
                     pass
         return self.powr
+
     def makelines(self,x,y):
         self.col = generate_cyan_shade(1000-globalpower)
-
-
 
         for xx in range(7):
             for yy in range(7):
@@ -72,14 +78,15 @@ class Node:
             else:
                 i += 1
 
-        
-
+    def damage(self,dmg):
+        self.hp -= dmg
 
 
 class Lightningtower:
     def __init__(self):
         self.hp = 75
         self.pwr = 0
+
     def strikereq(self,x,y):
         if random.randint(0,100) == 13:
             #print("STRIKE",x,y)
@@ -87,14 +94,22 @@ class Lightningtower:
         else:
             if self.pwr > 0:
                 self.pwr -= 40
+
+    def damage(self,dmg):
+        self.hp -= dmg
             
+
 class Battery:
     def __init__(self):
         self.hp = 75
         self.pwr = 0
         self.storedpwr = 0
+
     def execute(self):
         self.pwr = 0
+
+    def damage(self,dmg):
+        self.hp -= dmg
         """
         if globalpower > 100 and self.storedpwr <= 10000:
             self.pwr = -100
@@ -109,12 +124,11 @@ class Spawner:
     def __init__(self):
         self.hp = 100000000
         self.pwr = 0
+
     def summon(self,wave):
         global enemys
         for i in range(wave):
             enemys.append(Enemy())
-
-
 
 
 class Enemy:
@@ -123,23 +137,17 @@ class Enemy:
         self.xpos = 13*128+32
         self.ypos = 0
 
-
     def execute(self):
         screen.blit(enemytex, (self.xpos-xpos,self.ypos-ypos))
-        print(int(self.xpos/128),int(self.ypos/128))
-        if tiles[int(self.xpos/128)][int(self.ypos/128)] != 0 and not isinstance(tiles[int(self.xpos/128)][int(self.ypos/128)],Spawner):
-            tiles [int(self.xpos/128)][int(self.ypos/128)].hp -= 5
-            
+        #print(int(self.xpos/128),int(self.ypos/128))
+        if tiles[int(self.xpos/128)][int(self.ypos/128)] != 0 and not isinstance(tiles[int(self.xpos/128)][int(self.ypos/128)], Spawner):
+            tiles[int(self.xpos/128)][int(self.ypos/128)].damage(5)
+            #print(tiles[int(self.xpos/128)][int(self.ypos/128)].hp, tiles[int(self.xpos/128)][int(self.ypos/128)])
+            #print(tiles[int(self.xpos/128)+1][int(self.ypos/128)].hp)   
         else:
             self.xpos, self.ypos = move_towards_target((self.xpos,self.ypos),(13*128+32,21*128), 2)
 
-
-
-
-
-
         #da enemy can only walk at 2 coordinates per tick
-
 
 
 
@@ -155,20 +163,6 @@ def calculate_direction(current_position, target_position):
     dy = target_position[1] - current_position[1]
     angle = math.atan2(dy, dx)
     return math.cos(angle), math.sin(angle)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -194,8 +188,6 @@ def generate_cyan_shade(input_number):
 
 
 
-
-
 #Initialise basics
 pygame.display.set_caption('Terra Nova')
 pygame.display.set_icon(pygame.image.load("Images/icon.png"))
@@ -210,6 +202,7 @@ for x in range(25):
     tiles.append([])
     for y in range(25):
         tiles[x].append(0)
+
 xpos = 1600
 ypos = 1600
 carrying = False
@@ -243,9 +236,6 @@ while running:
     if mousedown:
         mousedown = False
 
-
-
-
     #event loop
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -254,6 +244,7 @@ while running:
             mousedown = True
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
             carrying = False
+
     #key check
     keys = pygame.key.get_pressed()
     if keys[pygame.K_s] and ypos - 180 < 2300:
@@ -275,44 +266,36 @@ while running:
         for y in range(25):
             try:
                 if tiles[x][y].hp <= 0:
+                    #print(tiles[x][y],tiles[x][y].hp)
                     tiles[x][y] = 0
             except:
                 pass
 
-
-            if tiles[x][y] == 0 or isinstance(tiles[x][y],Spawner):
+            if tiles[x][y] == 0 or isinstance(tiles[x][y], Spawner):
                 tile = emptytile
-
-            elif isinstance(tiles[x][y],Core):
+            elif isinstance(tiles[x][y], Core):
                 tile = coretile
-
-            elif isinstance(tiles[x][y],Wall):
+            elif isinstance(tiles[x][y], Wall):
                 tile = walltile
-            elif isinstance(tiles[x][y],Node):
+            elif isinstance(tiles[x][y], Node):
                 tile = nodetile
                 globalpower += tiles[x][y].powercheck(x,y)
-            elif isinstance(tiles[x][y],Lightningtower):
+            elif isinstance(tiles[x][y], Lightningtower):
                 tile = lightningtower
                 tiles[x][y].strikereq(x,y)
-            elif isinstance(tiles[x][y],Battery):
+            elif isinstance(tiles[x][y], Battery):
                 tile = batterytile
 
             screen.blit(tile,(x*128-xpos,y*128-ypos))
-    
-
-
-
-
-
-
+  
 
 
     count = 0
     for x in range(25):
         for y in range(25):
-            if isinstance(tiles[x][y],Node):
+            if isinstance(tiles[x][y], Node):
                 tiles[x][y].makelines(x,y)
-            elif isinstance(tiles[x][y],Battery):
+            elif isinstance(tiles[x][y], Battery):
                 count += 1
     try:
         
@@ -337,29 +320,33 @@ while running:
 
     #Summon waves
     if iteration % 1000 == 0:
-        print("WAVE",int(iteration/1000))
+        print("WAVE", int(iteration/1000))
         tiles[13][0].summon(int(iteration/1000))
     for i in range(len(enemys)):
         enemys[i].execute()
 
 
-
-
-
     #checking for positioning
     if mousedown and carrying != False and tiles[int((xpos+xcurs)/128)][int((ypos+ycurs)/128)] == 0:
+        #print(f"placing object {type(carrying)}")
         tiles[int((xpos+xcurs)/128)][int((ypos+ycurs)/128)] = carrying
         
         #if isinstance(carrying,Node):
         #    tiles[int((xpos+xcurs)/128)][int((ypos+ycurs)/128)].birth()
 
-
         if keys[pygame.K_LSHIFT] == False:
             carrying = False
-
-
-
-
+        else:
+            if isinstance(carrying, Wall):
+                carrying = Wall()
+            elif isinstance(carrying, Node):
+                carrying = Node()
+            elif isinstance(carrying, Lightningtower):
+                carrying = Lightningtower()
+            elif carrying == 1:
+                carrying = 1
+            elif isinstance(carrying, Battery):
+                carrying = Battery()
 
     
     if mousedown and carrying != False and tiles[int((xpos+xcurs)/128)][int((ypos+ycurs)/128)] != 0 and carrying == 1:
@@ -367,9 +354,6 @@ while running:
         if keys[pygame.K_LSHIFT] == False:
             carrying = False
     
-
-
-
 
     #hotbar
     screen.blit(hotbar,(0,600))
@@ -391,30 +375,21 @@ while running:
         carrying = 1
 
     if carrying != False:
-        if isinstance(carrying,Wall):
+        if isinstance(carrying, Wall):
             screen.blit(walltile,(xcurs-64,ycurs+-64))
-        elif isinstance(carrying,Node):
+        elif isinstance(carrying, Node):
             screen.blit(nodetile,(xcurs-64,ycurs+-64))
-        elif isinstance(carrying,Lightningtower):
+        elif isinstance(carrying, Lightningtower):
             screen.blit(lightningtower,(xcurs-64,ycurs+-64))
         elif carrying == 1:
             screen.blit(delete,(xcurs-64,ycurs+-64))
-        elif isinstance(carrying,Battery):
+        elif isinstance(carrying, Battery):
             screen.blit(batterytile,(xcurs-64,ycurs+-64))
-
-
-
-
-
 
     clock.tick(60)
     pygame.display.flip()
 
             
 
-
-
 pygame.quit()
-
-
 
