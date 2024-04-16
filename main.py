@@ -1,5 +1,6 @@
 import pygame
 import random
+import math
 
 #core class
 class Core:
@@ -104,6 +105,60 @@ class Battery:
         print(self.storedpwr,globalpower)
         """
 
+class Spawner:
+    def __init__(self):
+        self.hp = 100000000
+        self.pwr = 0
+    def summon(self,wave):
+        global enemys
+        for i in range(wave):
+            enemys.append(Enemy())
+
+
+
+
+class Enemy:
+    def __init__(self):
+        self.lp = 100
+        self.xpos = 13*128
+        self.ypos = 0
+
+
+    def execute(self):
+        screen.blit(enemytex, (self.xpos-xpos,self.ypos-ypos))
+        self.xpos, self.ypos = move_towards_target((self.xpos,self.ypos),(13*128,21*128), 2)
+
+
+        #da enemy can only walk at 2 coordinates per tick
+
+
+
+
+def move_towards_target(current_position, target_position, max_movement):
+    direction = calculate_direction(current_position, target_position)
+    dx = direction[0] * max_movement
+    dy = direction[1] * max_movement
+    new_position = (current_position[0] + dx, current_position[1] + dy)
+    return new_position
+
+def calculate_direction(current_position, target_position):
+    dx = target_position[0] - current_position[0]
+    dy = target_position[1] - current_position[1]
+    angle = math.atan2(dy, dx)
+    return math.cos(angle), math.sin(angle)
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -154,6 +209,9 @@ networks = []
 globalpower = 0
 tileschecked = []
 globalstored = 0
+tiles[13][0] = Spawner()
+iteration = 0
+enemys = list()
 
 #getting Images
 hotbar = pygame.image.load("Images/hotbar.png")
@@ -164,13 +222,14 @@ nodetile = pygame.image.load("Images/node.png")
 delete = pygame.image.load("Images/delete.png")
 lightningtower = pygame.image.load("Images/lightningtower.png")
 batterytile = pygame.image.load("Images/battery.png")
-
+enemytex = pygame.image.load("Images/enemy.png")
 
 
 c = Core()
 tiles[13][21] = c
 
 while running:
+    iteration += 1
     globalpower = 0
     if mousedown:
         mousedown = False
@@ -205,7 +264,7 @@ while running:
     #rendering tiles
     for x in range(25):
         for y in range(25):
-            if tiles[x][y] == 0:
+            if tiles[x][y] == 0 or isinstance(tiles[x][y],Spawner):
                 tile = emptytile
 
             elif isinstance(tiles[x][y],Core):
@@ -248,11 +307,15 @@ while running:
         pass
 
 
-    print(globalpower, globalstored)
+    #print(globalpower, globalstored)
 
 
-
-
+    #Summon waves
+    if iteration % 1000 == 0:
+        print("WAVE",int(iteration/1000))
+        tiles[13][0].summon(int(iteration/1000))
+    for i in range(len(enemys)):
+        enemys[i].execute()
 
 
 
