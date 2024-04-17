@@ -5,6 +5,7 @@ import math
 #core class
 class Core:
     def __init__(self):
+        self.maxhp = 100
         self.hp = 100
         self.pwr = -100
 
@@ -18,6 +19,7 @@ class Wall:
         print("new wall object created")
         self.hp = 200
         self.pwr = -100
+        self.maxhp = 100
 
     def damage(self,dmg):
         self.hp -= dmg
@@ -31,6 +33,7 @@ class Node:
         self.col = ""
         self.pulses = []
         self.above900 = False
+        self.maxhp = 100
 
     def powercheck (self,x,y):
         global tileschecked
@@ -89,6 +92,7 @@ class Lightningtower:
     def __init__(self):
         self.hp = 75
         self.pwr = 0
+        self.maxhp = 100
 
     def strikereq(self,x,y):
         if random.randint(0,100) == 13:
@@ -107,6 +111,7 @@ class Battery:
         self.hp = 75
         self.pwr = 0
         self.storedpwr = 0
+        self.maxhp = 100
 
     def execute(self):
         self.pwr = 0
@@ -126,6 +131,7 @@ class Turret:
     def __init__(self):
         self.hp = 100
         self.pwr = 0
+        self.maxhp = 100
     def execute(self,x,y):
         if globalpower >= 100:
             targets = []
@@ -142,14 +148,40 @@ class Turret:
                     enemypos = (enemys[i].xpos-xpos+32, enemys[i].ypos-ypos+32)
                     #print(turpos,enemypos)
                     pygame.draw.line(screen, "#de0202", (turpos[0]-xpos,turpos[1]-ypos),enemypos,10)
-                    enemys[i].dmg(5)
+                    enemys[i].dmg(2)
                 if enemys[i].lp <= 0:
                     enemys.pop(i)
+        else:
+            self.pwr = 0
 
 
 
     def damage(self, dmg):
         self.hp -= dmg
+
+class Mender:
+    def __init__(self):
+        self.hp = 75
+        self.pwr = 0
+        self.maxhp = 100
+    def execute(self,x,y):
+        if globalpower >= 100:
+            self.pwr = -100
+            if iteration % 50 == 0:
+                for xx in range(5):
+                    for yy in range(5):
+                        try:
+                            if tiles[x-2+xx][y-2+yy].hp < tiles[x-2+xx][y-2+yy].maxhp:
+                                tiles[x-2+xx][y-2+yy].damage(-5)
+                        except:
+                            pass
+    def damage(self,dmg):
+        self.hp -= dmg
+
+
+
+
+
 
 class Spawner:
     def __init__(self):
@@ -165,8 +197,8 @@ class Spawner:
 class Enemy:
     def __init__(self):
         self.lp = 100
-        self.xpos = 13*128+32
-        self.ypos = 0
+        self.xpos = 13*128+32 + random.randint(-64,64)
+        self.ypos = 0 + + random.randint(-64,64)
     def dmg(self,dmg):
         self.lp -= dmg
         
@@ -197,6 +229,10 @@ def calculate_direction(current_position, target_position):
     dy = target_position[1] - current_position[1]
     angle = math.atan2(dy, dx)
     return math.cos(angle), math.sin(angle)
+
+
+
+
 
 
 
@@ -260,7 +296,13 @@ lightningtower = pygame.image.load("Images/lightningtower.png")
 batterytile = pygame.image.load("Images/battery.png")
 enemytex = pygame.image.load("Images/enemy.png")
 turrettile = pygame.image.load("Images/turret.png")
+mendertile = pygame.image.load("Images/mender.png")
 
+leffect = []
+
+for i in range(12):
+    filepath = "Images/Lightning Strike Animation/background-remover/lightning-form-effect-{}.png".format(i+1)
+    leffect.append(pygame.image.load(filepath))
 
 c = Core()
 tiles[13][21] = c
@@ -322,6 +364,8 @@ while running:
                 tile = batterytile
             elif isinstance(tiles[x][y], Turret):
                 tile = turrettile
+            elif isinstance(tiles[x][y], Mender):
+                tile = mendertile
 
             screen.blit(tile,(x*128-xpos,y*128-ypos))
   
@@ -354,7 +398,7 @@ while running:
     for x in range(25):
         for y in range(25):
             #Stuff other than power
-            if isinstance(tiles[x][y], Turret):
+            if isinstance(tiles[x][y], Turret) or isinstance(tiles[x][y], Mender):
                 tiles[x][y].execute(x,y)
 
     #print(globalpower, globalstored)
@@ -366,6 +410,10 @@ while running:
         tiles[13][0].summon(int(iteration/1000))
     for i in range(len(enemys)):
         enemys[i].execute()
+
+
+
+    #print("Current animation frames:", animation_frames)
 
 
     #checking for positioning
@@ -391,13 +439,22 @@ while running:
                 carrying = Battery()
             elif isinstance(carrying, Turret):
                 carrying = Turret()
-
+            elif isinstance(carrying, Mender):
+                carrying = Mender()
     
     if mousedown and carrying != False and tiles[int((xpos+xcurs)/128)][int((ypos+ycurs)/128)] != 0 and carrying == 1:
         tiles[int((xpos+xcurs)/128)][int((ypos+ycurs)/128)] = 0
         if keys[pygame.K_LSHIFT] == False:
             carrying = False
     
+    
+
+
+
+
+
+
+
 
     #hotbar
     screen.blit(hotbar,(0,600))
@@ -407,6 +464,7 @@ while running:
     screen.blit(delete,(1145,610))
     screen.blit(batterytile,(420,610))
     screen.blit(turrettile,(560,610))
+    screen.blit(mendertile,(700,610))
     
     if mousedown and 10 < xcurs < 138 and 610 < ycurs < 738:
         carrying = Wall()
@@ -418,6 +476,8 @@ while running:
         carrying = Battery()
     if mousedown and 560 < xcurs < 688 and 610 < ycurs < 738:
         carrying = Turret()
+    if mousedown and 700 < xcurs < 828 and 610 < ycurs < 738:
+        carrying = Mender()
     if mousedown and 1145 < xcurs < 1273 and 610 < ycurs < 738:
         carrying = 1
 
@@ -436,6 +496,9 @@ while running:
         elif isinstance(carrying, Turret):
             pygame.draw.circle(screen, "#ffffff", (xcurs,ycurs), 512, 5)
             screen.blit(turrettile,(xcurs-64,ycurs+-64))
+        elif isinstance(carrying, Mender):
+            pygame.draw.polygon(screen,"#ffffff", ((xcurs+320,ycurs+320),(xcurs+320,ycurs-320),(xcurs-320,ycurs-320),(xcurs-320,ycurs+320)),5)
+            screen.blit(mendertile,(xcurs-64,ycurs+-64))
 
     clock.tick(60)
     pygame.display.flip()
