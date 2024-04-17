@@ -53,8 +53,11 @@ class Node:
 
         for xx in range(7):
             for yy in range(7):
-                if tiles[x-3+xx][y-3+yy] != 0:
-                    pygame.draw.line(screen,self.col,(x*128-xpos+64,y*128-ypos+64),((x-3+xx)*128-xpos+64,(y-3+yy)*128-ypos+64),10)
+                try:
+                    if tiles[x-3+xx][y-3+yy] != 0:
+                        pygame.draw.line(screen,self.col,(x*128-xpos+64,y*128-ypos+64),((x-3+xx)*128-xpos+64,(y-3+yy)*128-ypos+64),10)
+                except:
+                    pass
         if globalpower >= 900 and self.above900 == False:
             self.pulses.append(1)
             self.above900 = True
@@ -119,6 +122,34 @@ class Battery:
             self.storedpwr -= 100
         print(self.storedpwr,globalpower)
         """
+class Turret:
+    def __init__(self):
+        self.hp = 100
+        self.pwr = 0
+    def execute(self,x,y):
+        if globalpower >= 100:
+            targets = []
+            self.pwr = -100
+            #print("S")
+            for i in range(len(enemys)):
+                enemypos = (enemys[i].xpos, enemys[i].ypos)
+                turpos = (x*128+64,y*128+64)
+                if math.dist(turpos,enemypos) <= 512:
+                    targets.append(math.dist(turpos,enemypos))
+                    #print("targetinrange")
+            for i in range(len(targets)):
+                if min(targets) == targets[i]:
+                    enemypos = (enemys[i].xpos-xpos+32, enemys[i].ypos-ypos+32)
+                    #print(turpos,enemypos)
+                    pygame.draw.line(screen, "#de0202", (turpos[0]-xpos,turpos[1]-ypos),enemypos,10)
+                    enemys[i].dmg(5)
+                if enemys[i].lp <= 0:
+                    enemys.pop(i)
+
+
+
+    def damage(self, dmg):
+        self.hp -= dmg
 
 class Spawner:
     def __init__(self):
@@ -136,6 +167,9 @@ class Enemy:
         self.lp = 100
         self.xpos = 13*128+32
         self.ypos = 0
+    def dmg(self,dmg):
+        self.lp -= dmg
+        
 
     def execute(self):
         screen.blit(enemytex, (self.xpos-xpos,self.ypos-ypos))
@@ -225,6 +259,7 @@ delete = pygame.image.load("Images/delete.png")
 lightningtower = pygame.image.load("Images/lightningtower.png")
 batterytile = pygame.image.load("Images/battery.png")
 enemytex = pygame.image.load("Images/enemy.png")
+turrettile = pygame.image.load("Images/turret.png")
 
 
 c = Core()
@@ -285,6 +320,8 @@ while running:
                 tiles[x][y].strikereq(x,y)
             elif isinstance(tiles[x][y], Battery):
                 tile = batterytile
+            elif isinstance(tiles[x][y], Turret):
+                tile = turrettile
 
             screen.blit(tile,(x*128-xpos,y*128-ypos))
   
@@ -297,6 +334,7 @@ while running:
                 tiles[x][y].makelines(x,y)
             elif isinstance(tiles[x][y], Battery):
                 count += 1
+            
     try:
         
         if globalpower < 0 and globalstored > 0:
@@ -313,7 +351,11 @@ while running:
 
     except:
         pass
-
+    for x in range(25):
+        for y in range(25):
+            #Stuff other than power
+            if isinstance(tiles[x][y], Turret):
+                tiles[x][y].execute(x,y)
 
     #print(globalpower, globalstored)
 
@@ -347,6 +389,8 @@ while running:
                 carrying = 1
             elif isinstance(carrying, Battery):
                 carrying = Battery()
+            elif isinstance(carrying, Turret):
+                carrying = Turret()
 
     
     if mousedown and carrying != False and tiles[int((xpos+xcurs)/128)][int((ypos+ycurs)/128)] != 0 and carrying == 1:
@@ -362,6 +406,7 @@ while running:
     screen.blit(lightningtower,(286,610))
     screen.blit(delete,(1145,610))
     screen.blit(batterytile,(420,610))
+    screen.blit(turrettile,(560,610))
     
     if mousedown and 10 < xcurs < 138 and 610 < ycurs < 738:
         carrying = Wall()
@@ -371,6 +416,8 @@ while running:
         carrying = Lightningtower()
     if mousedown and 420 < xcurs < 548 and 610 < ycurs < 738:
         carrying = Battery()
+    if mousedown and 560 < xcurs < 688 and 610 < ycurs < 738:
+        carrying = Turret()
     if mousedown and 1145 < xcurs < 1273 and 610 < ycurs < 738:
         carrying = 1
 
@@ -378,6 +425,7 @@ while running:
         if isinstance(carrying, Wall):
             screen.blit(walltile,(xcurs-64,ycurs+-64))
         elif isinstance(carrying, Node):
+            pygame.draw.polygon(screen,"#ffffff", ((xcurs+448,ycurs+448),(xcurs+448,ycurs-448),(xcurs-448,ycurs-448),(xcurs-448,ycurs+448)),5)
             screen.blit(nodetile,(xcurs-64,ycurs+-64))
         elif isinstance(carrying, Lightningtower):
             screen.blit(lightningtower,(xcurs-64,ycurs+-64))
@@ -385,6 +433,9 @@ while running:
             screen.blit(delete,(xcurs-64,ycurs+-64))
         elif isinstance(carrying, Battery):
             screen.blit(batterytile,(xcurs-64,ycurs+-64))
+        elif isinstance(carrying, Turret):
+            pygame.draw.circle(screen, "#ffffff", (xcurs,ycurs), 512, 5)
+            screen.blit(turrettile,(xcurs-64,ycurs+-64))
 
     clock.tick(60)
     pygame.display.flip()
