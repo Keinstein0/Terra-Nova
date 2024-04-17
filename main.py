@@ -149,8 +149,13 @@ class Turret:
                     #print(turpos,enemypos)
                     pygame.draw.line(screen, "#de0202", (turpos[0]-xpos,turpos[1]-ypos),enemypos,10)
                     enemys[i].dmg(2)
-                if enemys[i].lp <= 0:
-                    enemys.pop(i)
+                
+                try:
+                    if enemys[i].lp <= 0:
+                        enemys.pop(i)
+
+                except:
+                    pass
         else:
             self.pwr = 0
 
@@ -167,12 +172,14 @@ class Mender:
     def execute(self,x,y):
         if globalpower >= 100:
             self.pwr = -100
-            if iteration % 50 == 0:
+            if iteration % 1 == 0:
                 for xx in range(5):
                     for yy in range(5):
                         try:
                             if tiles[x-2+xx][y-2+yy].hp < tiles[x-2+xx][y-2+yy].maxhp:
+                                print(type(tiles[x-2+xx][y-2+yy]),tiles[x-2+xx][y-2+yy].hp)
                                 tiles[x-2+xx][y-2+yy].damage(-5)
+                                pygame.draw.line(screen, "#017d09", ((x-2+xx)*128-xpos+64,(y-2+yy)*128-ypos+64),(x*128-xpos+64,y*128-ypos+64),10)
                         except:
                             pass
     def damage(self,dmg):
