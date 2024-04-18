@@ -5,8 +5,8 @@ import math
 #core class
 class Core:
     def __init__(self):
-        self.maxhp = 100
-        self.hp = 100
+        self.maxhp = 1000
+        self.hp = 1000
         self.pwr = -100
 
     def damage(self,dmg):
@@ -19,7 +19,7 @@ class Wall:
         print("new wall object created")
         self.hp = 200
         self.pwr = -100
-        self.maxhp = 100
+        self.maxhp = 200
 
     def damage(self,dmg):
         self.hp -= dmg
@@ -33,7 +33,7 @@ class Node:
         self.col = ""
         self.pulses = []
         self.above900 = False
-        self.maxhp = 100
+        self.maxhp = 50
 
     def powercheck (self,x,y):
         global tileschecked
@@ -92,15 +92,26 @@ class Lightningtower:
     def __init__(self):
         self.hp = 75
         self.pwr = 0
-        self.maxhp = 100
+        self.maxhp = 75
+        self.animation = leffect
+        self.current_image = None
 
     def strikereq(self,x,y):
         if random.randint(0,100) == 13:
             #print("STRIKE",x,y)
             self.pwr = 1000
+            self.current_image = 0
         else:
             if self.pwr > 0:
                 self.pwr -= 40
+    
+    def execute(self,x,y):
+        if self.current_image != None:
+            screen.blit(self.animation[self.current_image],(x*128-xpos-128,y*128-ypos-200))
+            if iteration % 3 == 0:
+                self.current_image += 1
+            if self.current_image == len(self.animation):
+                self.current_image = None
 
     def damage(self,dmg):
         self.hp -= dmg
@@ -111,7 +122,7 @@ class Battery:
         self.hp = 75
         self.pwr = 0
         self.storedpwr = 0
-        self.maxhp = 100
+        self.maxhp = 75
 
     def execute(self):
         self.pwr = 0
@@ -127,11 +138,14 @@ class Battery:
             self.storedpwr -= 100
         print(self.storedpwr,globalpower)
         """
+
+
 class Turret:
     def __init__(self):
         self.hp = 100
         self.pwr = 0
         self.maxhp = 100
+
     def execute(self,x,y):
         if globalpower >= 100:
             targets = []
@@ -159,16 +173,16 @@ class Turret:
         else:
             self.pwr = 0
 
-
-
     def damage(self, dmg):
         self.hp -= dmg
+
 
 class Mender:
     def __init__(self):
         self.hp = 75
         self.pwr = 0
-        self.maxhp = 100
+        self.maxhp = 75
+
     def execute(self,x,y):
         if globalpower >= 100:
             self.pwr = -100
@@ -182,11 +196,9 @@ class Mender:
                                 pygame.draw.line(screen, "#017d09", ((x-2+xx)*128-xpos+64,(y-2+yy)*128-ypos+64),(x*128-xpos+64,y*128-ypos+64),10)
                         except:
                             pass
+
     def damage(self,dmg):
         self.hp -= dmg
-
-
-
 
 
 
@@ -299,7 +311,7 @@ coretile = pygame.image.load("Images/core.png")
 walltile = pygame.image.load("Images/wall.png")
 nodetile = pygame.image.load("Images/node.png")
 delete = pygame.image.load("Images/delete.png")
-lightningtower = pygame.image.load("Images/lightningtower.png")
+lightningtower_tile = pygame.image.load("Images/lightningtower.png")
 batterytile = pygame.image.load("Images/battery.png")
 enemytex = pygame.image.load("Images/enemy.png")
 turrettile = pygame.image.load("Images/turret.png")
@@ -309,7 +321,9 @@ leffect = []
 
 for i in range(12):
     filepath = "Images/Lightning Strike Animation/background-remover/lightning-form-effect-{}.png".format(i+1)
-    leffect.append(pygame.image.load(filepath))
+    img = pygame.image.load(filepath)
+    leffect.append(img)
+
 
 c = Core()
 tiles[13][21] = c
@@ -365,7 +379,7 @@ while running:
                 tile = nodetile
                 globalpower += tiles[x][y].powercheck(x,y)
             elif isinstance(tiles[x][y], Lightningtower):
-                tile = lightningtower
+                tile = lightningtower_tile
                 tiles[x][y].strikereq(x,y)
             elif isinstance(tiles[x][y], Battery):
                 tile = batterytile
@@ -405,7 +419,7 @@ while running:
     for x in range(25):
         for y in range(25):
             #Stuff other than power
-            if isinstance(tiles[x][y], Turret) or isinstance(tiles[x][y], Mender):
+            if isinstance(tiles[x][y], Turret) or isinstance(tiles[x][y], Mender) or isinstance(tiles[x][y], Lightningtower):
                 tiles[x][y].execute(x,y)
 
     #print(globalpower, globalstored)
@@ -467,7 +481,7 @@ while running:
     screen.blit(hotbar,(0,600))
     screen.blit(walltile,(10,610))
     screen.blit(nodetile,(143,610))
-    screen.blit(lightningtower,(286,610))
+    screen.blit(lightningtower_tile,(286,610))
     screen.blit(delete,(1145,610))
     screen.blit(batterytile,(420,610))
     screen.blit(turrettile,(560,610))
@@ -495,7 +509,7 @@ while running:
             pygame.draw.polygon(screen,"#ffffff", ((xcurs+448,ycurs+448),(xcurs+448,ycurs-448),(xcurs-448,ycurs-448),(xcurs-448,ycurs+448)),5)
             screen.blit(nodetile,(xcurs-64,ycurs+-64))
         elif isinstance(carrying, Lightningtower):
-            screen.blit(lightningtower,(xcurs-64,ycurs+-64))
+            screen.blit(lightningtower_tile,(xcurs-64,ycurs+-64))
         elif carrying == 1:
             screen.blit(delete,(xcurs-64,ycurs+-64))
         elif isinstance(carrying, Battery):
