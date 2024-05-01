@@ -162,7 +162,7 @@ class Turret:
                     enemypos = (enemys[i].xpos-xpos+32, enemys[i].ypos-ypos+32)
                     #print(turpos,enemypos)
                     pygame.draw.line(screen, "#de0202", (turpos[0]-xpos,turpos[1]-ypos),enemypos,10)
-                    enemys[i].dmg(2)
+                    enemys[i].dmg(1)
                 
                 try:
                     if enemys[i].lp <= 0:
@@ -520,6 +520,20 @@ while running:
         elif isinstance(carrying, Mender):
             pygame.draw.polygon(screen,"#ffffff", ((xcurs+320,ycurs+320),(xcurs+320,ycurs-320),(xcurs-320,ycurs-320),(xcurs-320,ycurs+320)),5)
             screen.blit(mendertile,(xcurs-64,ycurs+-64))
+    #print(tiles[13][21])
+    
+    if not isinstance(tiles[13][21],Core):
+        print("FF")
+        break
+
+
+
+
+
+
+
+
+
 
     clock.tick(60)
     pygame.display.flip()
