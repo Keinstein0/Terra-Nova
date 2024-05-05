@@ -7,7 +7,7 @@ class Core:
     def __init__(self):
         self.maxhp = 1000
         self.hp = 1000
-        self.pwr = -100
+        self.pwr = 0
 
     def damage(self,dmg):
         self.hp -= dmg
@@ -57,7 +57,7 @@ class Node:
         for xx in range(7):
             for yy in range(7):
                 try:
-                    if tiles[x-3+xx][y-3+yy] != 0:
+                    if tiles[x-3+xx][y-3+yy] != 0 and not(isinstance(tiles[x-3+xx][y-3+yy],Wall)) and not((isinstance(tiles[x-3+xx][y-3+yy],Node))) and not((isinstance(tiles[x-3+xx][y-3+yy],Core))):
                         pygame.draw.line(screen,self.col,(x*128-xpos+64,y*128-ypos+64),((x-3+xx)*128-xpos+64,(y-3+yy)*128-ypos+64),10)
                 except:
                     pass
@@ -147,31 +147,35 @@ class Turret:
         self.maxhp = 100
 
     def execute(self,x,y):
-        if globalpower >= 100:
-            targets = []
-            self.pwr = -100
-            #print("S")
-            for i in range(len(enemys)):
-                enemypos = (enemys[i].xpos, enemys[i].ypos)
-                turpos = (x*128+64,y*128+64)
-                if math.dist(turpos,enemypos) <= 512:
-                    targets.append(math.dist(turpos,enemypos))
-                    #print("targetinrange")
-            for i in range(len(targets)):
-                if min(targets) == targets[i]:
-                    enemypos = (enemys[i].xpos-xpos+32, enemys[i].ypos-ypos+32)
-                    #print(turpos,enemypos)
-                    pygame.draw.line(screen, "#de0202", (turpos[0]-xpos,turpos[1]-ypos),enemypos,10)
-                    enemys[i].dmg(1)
-                
-                try:
-                    if enemys[i].lp <= 0:
-                        enemys.pop(i)
+        if (x,y) in tileschecked:
+            
+            if globalpower >= 100 or globalstored > 0:
+                targets = []
+                self.pwr = -10
+                #print("S")
+                for i in range(len(enemys)):
+                    enemypos = (enemys[i].xpos, enemys[i].ypos)
+                    turpos = (x*128+64,y*128+64)
+                    if math.dist(turpos,enemypos) <= 512:
+                        targets.append(math.dist(turpos,enemypos))
+                        #print("targetinrange")
+                if len(targets) >= 0:
+                    self.pwr = -100
+                for i in range(len(targets)):
+                    if min(targets) == targets[i]:
+                        enemypos = (enemys[i].xpos-xpos+32, enemys[i].ypos-ypos+32)
+                        #print(turpos,enemypos)
+                        pygame.draw.line(screen, "#de0202", (turpos[0]-xpos,turpos[1]-ypos),enemypos,10)
+                        enemys[i].dmg(1)
+                    
+                    try:
+                        if enemys[i].lp <= 0:
+                            enemys.pop(i)
 
-                except:
-                    pass
-        else:
-            self.pwr = 0
+                    except:
+                        pass
+            else:
+                self.pwr = 0
 
     def damage(self, dmg):
         self.hp -= dmg
@@ -184,18 +188,20 @@ class Mender:
         self.maxhp = 75
 
     def execute(self,x,y):
-        if globalpower >= 100:
-            self.pwr = -100
-            if iteration % 1 == 0:
-                for xx in range(5):
-                    for yy in range(5):
-                        try:
-                            if tiles[x-2+xx][y-2+yy].hp < tiles[x-2+xx][y-2+yy].maxhp:
-                                print(type(tiles[x-2+xx][y-2+yy]),tiles[x-2+xx][y-2+yy].hp)
-                                tiles[x-2+xx][y-2+yy].damage(-5)
-                                pygame.draw.line(screen, "#017d09", ((x-2+xx)*128-xpos+64,(y-2+yy)*128-ypos+64),(x*128-xpos+64,y*128-ypos+64),10)
-                        except:
-                            pass
+        if (x,y) in tileschecked:
+
+            if globalpower >= 100 or globalstored > 0:
+                self.pwr = -100
+                if iteration % 1 == 0:
+                    for xx in range(5):
+                        for yy in range(5):
+                            try:
+                                if tiles[x-2+xx][y-2+yy].hp < tiles[x-2+xx][y-2+yy].maxhp:
+                                    print(type(tiles[x-2+xx][y-2+yy]),tiles[x-2+xx][y-2+yy].hp)
+                                    tiles[x-2+xx][y-2+yy].damage(-5)
+                                    pygame.draw.line(screen, "#017d09", ((x-2+xx)*128-xpos+64,(y-2+yy)*128-ypos+64),(x*128-xpos+64,y*128-ypos+64),10)
+                            except:
+                                pass
 
     def damage(self,dmg):
         self.hp -= dmg
@@ -284,6 +290,7 @@ running = True
 pygame.init()
 screen = pygame.display.set_mode((1280, 720))
 clock = pygame.time.Clock()
+font = pygame.font.Font(None,72)
 
 #Initialise Game Stuff
 tiles = []
@@ -303,6 +310,7 @@ globalstored = 0
 tiles[13][0] = Spawner()
 iteration = 0
 enemys = list()
+globalstored = 35000
 
 #getting Images
 hotbar = pygame.image.load("Images/hotbar.png")
@@ -316,6 +324,8 @@ batterytile = pygame.image.load("Images/battery.png")
 enemytex = pygame.image.load("Images/enemy.png")
 turrettile = pygame.image.load("Images/turret.png")
 mendertile = pygame.image.load("Images/mender.png")
+topbar = pygame.image.load("Images/topbar.png")
+nobuild = pygame.image.load("Images/nobuild.png")
 
 leffect = []
 
@@ -346,13 +356,13 @@ while running:
     #key check
     keys = pygame.key.get_pressed()
     if keys[pygame.K_s] and ypos - 180 < 2300:
-        ypos += 5
+        ypos += 10
     if keys[pygame.K_w] and ypos > 0:
-        ypos -= 5
+        ypos -= 10
     if keys[pygame.K_a] and xpos > 0:
-        xpos -= 5
+        xpos -= 10
     if keys[pygame.K_d] and xpos +380 < 2300:
-        xpos += 5
+        xpos += 10
 
     #cursor pos
     xcurs, ycurs = pygame.mouse.get_pos()
@@ -428,7 +438,7 @@ while running:
     #Summon waves
     if iteration % 1000 == 0:
         print("WAVE", int(iteration/1000))
-        tiles[13][0].summon(int(iteration/1000))
+        tiles[13][0].summon(int((iteration/1000)**1.1))
     for i in range(len(enemys)):
         enemys[i].execute()
 
@@ -448,59 +458,117 @@ while running:
         if keys[pygame.K_LSHIFT] == False:
             carrying = False
         else:
-            if isinstance(carrying, Wall):
+            if isinstance(carrying, Wall) and globalstored > 30000:
                 carrying = Wall()
-            elif isinstance(carrying, Node):
+                price = 30000
+            elif isinstance(carrying, Node) and globalstored > 5000:
                 carrying = Node()
-            elif isinstance(carrying, Lightningtower):
+                price = 5000
+            elif isinstance(carrying, Lightningtower) and globalstored > 10000:
                 carrying = Lightningtower()
+                price = 10000
             elif carrying == 1:
                 carrying = 1
-            elif isinstance(carrying, Battery):
+            elif isinstance(carrying, Battery) and globalstored > 10000:
                 carrying = Battery()
-            elif isinstance(carrying, Turret):
+                price = 10000
+            elif isinstance(carrying, Turret) and globalstored > 50000:
                 carrying = Turret()
-            elif isinstance(carrying, Mender):
+                price = 50000
+            elif isinstance(carrying, Mender) and globalstored > 100000:
                 carrying = Mender()
+                price = 100000
+            else:
+                carrying = False
     
+        globalstored -= price
+
     if mousedown and carrying != False and tiles[int((xpos+xcurs)/128)][int((ypos+ycurs)/128)] != 0 and carrying == 1:
         tiles[int((xpos+xcurs)/128)][int((ypos+ycurs)/128)] = 0
         if keys[pygame.K_LSHIFT] == False:
             carrying = False
     
+    screen.blit(topbar,(0,-50))
     
+    
+    
+    col = globalstored / (count * 50000 + 0.0000001)
+    if col > 1:
+        col = 1
 
 
+    red_value = min(255, int(((1 - col) / 1) * 255))
+    green_value = min(255, int((col / 1) * 255))
+    col = (red_value, green_value, 0)
 
+    try:
+        if globalstored/100 < 1000:
+            st = font.render(str(int(globalstored/100)),True, col)
+        else:
+            st = font.render(str(int(globalstored/10000)/10)+"k",True, col)
+
+
+        screen.blit(st, (550,30))
+
+    except:
+        pass
 
 
 
 
 
     #hotbar
-    screen.blit(hotbar,(0,600))
-    screen.blit(walltile,(10,610))
-    screen.blit(nodetile,(143,610))
-    screen.blit(lightningtower_tile,(286,610))
-    screen.blit(delete,(1145,610))
-    screen.blit(batterytile,(420,610))
-    screen.blit(turrettile,(560,610))
-    screen.blit(mendertile,(700,610))
-    
-    if mousedown and 10 < xcurs < 138 and 610 < ycurs < 738:
+    screen.blit(hotbar,(0,590))
+    screen.blit(walltile,(10,600))
+    screen.blit(nodetile,(143,600))
+    screen.blit(lightningtower_tile,(286,600))
+    screen.blit(delete,(1145,600))
+    screen.blit(batterytile,(420,600))
+    screen.blit(turrettile,(560,600))
+    screen.blit(mendertile,(700,600))
+    if globalstored < 30000:
+        screen.blit(nobuild,(10,600))
+    if globalstored < 5000:
+        screen.blit(nobuild,(143,600))
+    if globalstored < 10000:
+        screen.blit(nobuild,(286,600))
+    if globalstored < 10000:
+        screen.blit(nobuild,(420,600))
+    if globalstored < 50000:
+        screen.blit(nobuild,(560,600))
+    if globalstored < 100000:
+        screen.blit(nobuild,(700,600))
+
+
+
+
+
+
+
+
+
+
+    if mousedown and 10 < xcurs < 138 and 610 < ycurs < 738 and globalstored >= 30000:
         carrying = Wall()
-    if mousedown and 143 < xcurs < 271 and 610 < ycurs < 738:
+        price = 30000
+    if mousedown and 143 < xcurs < 271 and 610 < ycurs < 738 and globalstored >= 5000:
         carrying = Node()
-    if mousedown and 286 < xcurs < 414 and 610 < ycurs < 738:
+        price = 5000
+    if mousedown and 286 < xcurs < 414 and 610 < ycurs < 738 and globalstored >= 10000:
         carrying = Lightningtower()
-    if mousedown and 420 < xcurs < 548 and 610 < ycurs < 738:
+        price = 10000
+    if mousedown and 420 < xcurs < 548 and 610 < ycurs < 738 and globalstored >= 10000:
         carrying = Battery()
-    if mousedown and 560 < xcurs < 688 and 610 < ycurs < 738:
+        price = 10000
+    if mousedown and 560 < xcurs < 688 and 610 < ycurs < 738 and globalstored >= 50000:
         carrying = Turret()
-    if mousedown and 700 < xcurs < 828 and 610 < ycurs < 738:
+        price = 50000
+    if mousedown and 700 < xcurs < 828 and 610 < ycurs < 738 and globalstored >= 100000:
         carrying = Mender()
+        price = 100000
     if mousedown and 1145 < xcurs < 1273 and 610 < ycurs < 738:
         carrying = 1
+        price = 0
 
     if carrying != False:
         if isinstance(carrying, Wall):
@@ -535,7 +603,7 @@ while running:
 
 
 
-    clock.tick(60)
+    clock.tick(30)
     pygame.display.flip()
 
             
